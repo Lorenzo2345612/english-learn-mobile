@@ -20,6 +20,9 @@ import { WrittingCorrectionInfo } from "./components/writting.correction.info";
 import { ErrorView } from "@/src/common/views/error.view";
 import { LoadingView } from "@/src/common/views/loading.view";
 import { MaterialIcons } from "@expo/vector-icons";
+import { VerseComponent } from "./components/verse.component";
+import { useHintContext } from "../contexts/hints.context";
+import { FullPageWordDefinitionComponent } from "./components/full.page.word.definition.component";
 
 export function WrittingTestView() {
   const {
@@ -37,11 +40,13 @@ export function WrittingTestView() {
     cleanReview,
   } = useReviewWrittingTestViewModel();
 
+  const { currentHint } = useHintContext();
+
   if (isLoading) {
     return <LoadingView />;
   }
 
-  if (error || reviewError) {
+  if (error || reviewError || !question) {
     return <ErrorView retry={retry} />;
   }
 
@@ -56,57 +61,61 @@ export function WrittingTestView() {
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.innerContainer}
-    >
-      <Text style={styles.writtingTestText}>Writting Test</Text>
-
-      <TouchableOpacity
-        onPress={() => {
-          setAnswer("");
-          cleanReview();
-          retry();
-        }}
-        style={styles.nextButton}
+    <View style={styles.mainView}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.innerContainer}
       >
-        <Text style={styles.nextButtonText}>Next</Text>
-        <MaterialIcons name="navigate-next" size={24} color="white" />
-      </TouchableOpacity>
+        <Text style={styles.writtingTestText}>Writting Test</Text>
 
-      <Text style={styles.songTitle}>{question?.title}</Text>
-      <Text style={styles.artistName}>{question?.artist}</Text>
-      <Text style={styles.songLyrics}>{question?.verse}</Text>
+        <TouchableOpacity
+          onPress={() => {
+            setAnswer("");
+            cleanReview();
+            retry();
+          }}
+          style={styles.nextButton}
+        >
+          <Text style={styles.nextButtonText}>Next</Text>
+          <MaterialIcons name="navigate-next" size={24} color="white" />
+        </TouchableOpacity>
 
-      <TextInput
-        style={styles.answerInput}
-        placeholder="Write your answer here"
-        multiline
-        numberOfLines={5}
-        onChange={(e) => setAnswer(e.nativeEvent.text)}
-        value={answer}
-      />
+        <VerseComponent question={question} />
 
-      <TouchableOpacity
-        onPress={handleSubmit}
-        disabled={isReviewing}
-        style={styles.submitButton}
-      >
-        {isReviewing ? (
-          <ActivityIndicator />
-        ) : (
-          <Text style={styles.submitButtonText}>
-            {review ? "Retry" : "Submit"}
-          </Text>
-        )}
-      </TouchableOpacity>
+        <TextInput
+          style={styles.answerInput}
+          placeholder="Write your answer here"
+          multiline
+          numberOfLines={5}
+          onChange={(e) => setAnswer(e.nativeEvent.text)}
+          value={answer}
+        />
 
-      {review && <WrittingCorrectionInfo review={review} />}
-    </ScrollView>
+        <TouchableOpacity
+          onPress={handleSubmit}
+          disabled={isReviewing}
+          style={styles.submitButton}
+        >
+          {isReviewing ? (
+            <ActivityIndicator />
+          ) : (
+            <Text style={styles.submitButtonText}>
+              {review ? "Retry" : "Submit"}
+            </Text>
+          )}
+        </TouchableOpacity>
+
+        {review && <WrittingCorrectionInfo review={review} />}
+      </ScrollView>
+      {currentHint && <FullPageWordDefinitionComponent />}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  mainView: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     gap: 30,

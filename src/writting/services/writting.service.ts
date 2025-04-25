@@ -25,6 +25,7 @@ export class WrittingService {
       if (status !== 200) {
         throw new Error("Failed to fetch data");
       }
+      console.log("Writting test data", data.hints);
       return data;
     } catch (error: any) {
       console.error(error);

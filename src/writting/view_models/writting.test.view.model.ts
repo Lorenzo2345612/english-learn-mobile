@@ -1,8 +1,9 @@
 import { ReviewResponse } from "@/src/common/models/review.response.model";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { WrittingService } from "../services/writting.service";
 import { WrittingReviewModel } from "../models/writting.review.model";
+import { useHintContext } from "../contexts/hints.context";
 
 export const useGetWrittingTestViewModel = () => {
   const { data, error, isLoading, refetch } = useQuery({
@@ -10,9 +11,19 @@ export const useGetWrittingTestViewModel = () => {
     queryFn: WrittingService.instance.getWrittingTest,
   });
 
+  const { setHints, resetContext } = useHintContext();
+
   const retry = () => {
     refetch();
   };
+
+  // Set hints when data is fetched
+  useEffect(() => {
+    if (data) {
+      resetContext(); // Reset hints context before setting new hints
+      setHints(data.hints);
+    }
+  }, [data, setHints]);
 
   return {
     data,

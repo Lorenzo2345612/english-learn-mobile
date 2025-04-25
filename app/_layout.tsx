@@ -1,3 +1,4 @@
+import { HintProvider } from "@/src/writting/contexts/hints.context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -17,7 +18,9 @@ const queryClient = new QueryClient();
 export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
-      <RootLayoutNav />
+      <HintProvider>
+        <RootLayoutNav />
+      </HintProvider>
     </QueryClientProvider>
   );
 }

@@ -6,9 +6,10 @@ import { WrittingReviewModel } from "../models/writting.review.model";
 import { useHintContext } from "../contexts/hints.context";
 
 export const useGetWrittingTestViewModel = () => {
-  const { data, error, isLoading, refetch } = useQuery({
+  const [level, setLevel] = useState(-1);
+  const { data, error, isLoading, isPending, refetch } = useQuery({
     queryKey: ["writting-test"],
-    queryFn: WrittingService.instance.getWrittingTest,
+    queryFn: () => WrittingService.instance.getWrittingTest(level),
   });
 
   const { setHints, resetContext } = useHintContext();
@@ -30,6 +31,9 @@ export const useGetWrittingTestViewModel = () => {
     error,
     isLoading,
     retry,
+    level,
+    setLevel,
+    isPendingRefetch: isPending,
   };
 };
 

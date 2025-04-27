@@ -23,6 +23,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { VerseComponent } from "./components/verse.component";
 import { useHintContext } from "../contexts/hints.context";
 import { FullPageWordDefinitionComponent } from "./components/full.page.word.definition.component";
+import { LevelSelectorComponent } from "./components/level.selector.component";
 
 export function WrittingTestView() {
   const {
@@ -30,6 +31,8 @@ export function WrittingTestView() {
     isLoading,
     error,
     retry,
+    level,
+    setLevel,
   } = useGetWrittingTestViewModel();
   const { answer, setAnswer } = useManageWrittingTestViewModel();
   const {
@@ -68,17 +71,30 @@ export function WrittingTestView() {
       >
         <Text style={styles.writtingTestText}>Writting Test</Text>
 
-        <TouchableOpacity
-          onPress={() => {
-            setAnswer("");
-            cleanReview();
-            retry();
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            marginBottom: 20,
           }}
-          style={styles.nextButton}
         >
-          <Text style={styles.nextButtonText}>Next</Text>
-          <MaterialIcons name="navigate-next" size={24} color="white" />
-        </TouchableOpacity>
+          <LevelSelectorComponent
+            selectedLevel={level}
+            onLevelChange={setLevel}
+          />
+
+          <TouchableOpacity
+            onPress={() => {
+              setAnswer("");
+              cleanReview();
+              retry();
+            }}
+            style={styles.nextButton}
+          >
+            <Text style={styles.nextButtonText}>Next</Text>
+            <MaterialIcons name="navigate-next" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
 
         <VerseComponent question={question} />
 
@@ -169,7 +185,6 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: "center",
     width: 100,
-    alignSelf: "flex-end",
     flexDirection: "row",
     justifyContent: "center",
   },

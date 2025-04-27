@@ -17,10 +17,21 @@ export class WrittingService {
     return this._instance || (this._instance = new this());
   }
 
-  public async getWrittingTest() {
+  public async getWrittingTest(level: number) {
     try {
+      // Adjust level to match the API requirements
+      const levelParam: number | undefined =
+        level - 2 < 0 ? undefined : level - 2;
+
+      console.log("Fetching writting test data with level", levelParam);
+
       const { data, status } = await axios.get<WrittingTestModel>(
-        `${API_URL}/writting/get-activity/${USER_ID}`
+        `${API_URL}/writting/get-activity/${USER_ID}`,
+        {
+          params: {
+            level: levelParam,
+          },
+        }
       );
       if (status !== 200) {
         throw new Error("Failed to fetch data");

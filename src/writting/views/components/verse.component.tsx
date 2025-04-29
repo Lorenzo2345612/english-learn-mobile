@@ -1,7 +1,7 @@
 import { View } from "react-native";
 import { Hint, WrittingTestModel } from "../../models/writting.test.model";
 import { StyleSheet, Text } from "react-native";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useHintContext } from "../../contexts/hints.context";
 
 const getLevelColor = (level: number) => {
@@ -38,54 +38,99 @@ interface HintIndex {
 
 export const TextWithHints = ({ text }: TextWithHintsProps) => {
   const { hints, useHint } = useHintContext();
-  const [hintMap, setHintMap] = useState<Map<string, number>>(new Map());
+  const [splittedText, setSplittedText] = useState<string[]>([]);
 
-  const splitText = useCallback(() => {
-    const regex = /[\w'-]+|[.,!?;:"“”(){}\[\]]|\n/g;
-    const matches = text.match(regex);
-    return matches ?? [];
-  }, [text]);
+  // Precalcular el mapa de hints usando useMemo
+  const hintMap = useMemo(() => {
+    const map = new Map<string, number>();
+    hints.forEach((hint, index) => {
+      if (hint.word) {
+        map.set(hint.word.toLowerCase(), index);
+      }
+    });
+    console.log(hints);
+
+    return map;
+  }, [hints]);
 
   useEffect(() => {
-    // Reset the hints when the text changes
-    const hintMap = new Map<string, number>();
+    if (!text) {
+      setSplittedText([]);
+      return;
+    }
 
-    for (let i = 0; i < hints.length; i++) {
-      const hint = hints[i];
-      if (hint.word) {
-        // Store the word and its index in the map
-        hintMap.set(hint.word.toLowerCase(), i);
+    if (hints.length === 0) {
+      setSplittedText([text]);
+      return;
+    }
+
+    const START = "0b9d42a9-af4a-4721-879a-66569df3d7ec ";
+    const lowercasedText = START + text.toLowerCase();
+    const hintWords = [...hintMap.keys()].sort((a, b) => b.length - a.length);
+
+    const regex = new RegExp(`\\b(${hintWords.join("|")})\\b`, "g");
+    const replacedText = lowercasedText.replaceAll(
+      regex,
+      (match) => `__${match}__`
+    );
+
+    /*     let match;
+
+    while ((match = regex.exec(lowercasedText)) !== null) {
+      console.log("match", match.index);
+    } */
+
+    const matches = lowercasedText.match(regex) || [];
+    const textParts = replacedText.split(/__.*?__/);
+
+    console.log("matches", matches[0]);
+
+    const result: string[] = [];
+    let partIndex = 0,
+      matchIndex = 0;
+
+    while (partIndex < textParts.length || matchIndex < matches.length) {
+      if (partIndex < textParts.length) {
+        result.push(textParts[partIndex]);
+        partIndex++;
+      }
+      if (matchIndex < matches.length) {
+        result.push(matches[matchIndex]);
+        matchIndex++;
       }
     }
-    setHintMap(hintMap);
-  }, [hints, useHint]);
+
+    if (result[0]?.startsWith(START)) {
+      result[0] = result[0].replace(START, "");
+    }
+
+    if (result[0] === "") {
+      result.shift();
+    }
+
+    setSplittedText(result);
+  }, [text, hintMap]);
 
   return (
     <Text style={styles.songLyrics}>
-      {splitText().map((word, index) => {
+      {splittedText.map((word, index) => {
         const lowerWord = word.toLowerCase();
         const hintIndex = hintMap.get(lowerWord);
         if (hintIndex !== undefined) {
           return (
-            <>
-              <Text
-                key={index * 2}
-                style={styles.hintText}
-                onPress={() => useHint(hintIndex)}
-              >
-                {word}
-              </Text>
-              <Text key={index * 2 + 1}>{word.includes("\n") ? "" : " "}</Text>
-            </>
+            <Text
+              key={index}
+              style={styles.hintText}
+              onPress={() => useHint(hintIndex)}
+            >
+              {word}
+            </Text>
           );
         } else {
           return (
-            <>
-              <Text key={index * 2} style={{ color: "black" }}>
-                {word}
-              </Text>
-              <Text key={index * 2 + 1}>{word.includes("\n") ? "" : " "}</Text>
-            </>
+            <Text key={index} style={{ color: "black" }}>
+              {word}
+            </Text>
           );
         }
       })}

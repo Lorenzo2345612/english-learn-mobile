@@ -7,24 +7,29 @@ import { useHintContext } from "../contexts/hints.context";
 
 export const useGetWrittingTestViewModel = () => {
   const [level, setLevel] = useState(-1);
+  const { setHints, resetContext } = useHintContext();
+
+  const queryFn = async () => {
+    try {
+      const response = await WrittingService.instance.getWrittingTest(level);
+      if (response) {
+        setHints(response.hints);
+      }
+      return response;
+    } catch (error) {
+      console.error("Error fetching writting test:", error);
+      throw error; // Rethrow the error to be handled by react-query
+    }
+  };
+
   const { data, error, isLoading, isPending, refetch } = useQuery({
     queryKey: ["writting-test"],
-    queryFn: () => WrittingService.instance.getWrittingTest(level),
+    queryFn: queryFn,
   });
-
-  const { setHints, resetContext } = useHintContext();
 
   const retry = () => {
     refetch();
   };
-
-  // Set hints when data is fetched
-  useEffect(() => {
-    if (data) {
-      resetContext(); // Reset hints context before setting new hints
-      setHints(data.hints);
-    }
-  }, [data, setHints]);
 
   return {
     data,

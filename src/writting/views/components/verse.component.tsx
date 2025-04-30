@@ -1,4 +1,4 @@
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 import { Hint, WrittingTestModel } from "../../models/writting.test.model";
 import { StyleSheet, Text } from "react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -65,50 +65,64 @@ export const TextWithHints = ({ text }: TextWithHintsProps) => {
     }
 
     const START = "0b9d42a9-af4a-4721-879a-66569df3d7ec ";
-    const lowercasedText = START + text.toLowerCase();
+    const prefixedText = START + text;
+
+    const lowercasedText = prefixedText.toLowerCase();
     const hintWords = [...hintMap.keys()].sort((a, b) => b.length - a.length);
 
-    const regex = new RegExp(`\\b(${hintWords.join("|")})\\b`, "g");
-    const replacedText = lowercasedText.replaceAll(
-      regex,
-      (match) => `__${match}__`
+    const regex = new RegExp(
+      `(?<!\\w|')(${hintWords.join("|")})(?!\\w|')`,
+      "g"
     );
 
-    /*     let match;
+    // Separate the matches from the text
+    const matches: string[] = [];
+    const textParts: string[] = [];
 
+    let match;
+    let lastIndex = 0;
     while ((match = regex.exec(lowercasedText)) !== null) {
-      console.log("match", match.index);
-    } */
+      const startIndex = match.index;
+      const endIndex = match.index + match[0].length;
 
-    const matches = lowercasedText.match(regex) || [];
-    const textParts = replacedText.split(/__.*?__/);
+      // Add the text before the match
+      const beforeMatch = prefixedText.substring(lastIndex, startIndex);
+
+      const splittedBefore = beforeMatch.split("\n");
+      if (splittedBefore.length > 1) {
+        for (let i = 0; i < splittedBefore.length - 1; i++) {
+          textParts.push(splittedBefore[i]);
+          textParts.push("\n");
+        }
+        const lastPart = splittedBefore[splittedBefore.length - 1];
+        if (lastPart !== "") {
+          textParts.push(lastPart);
+        }
+      } else {
+        textParts.push(beforeMatch);
+      }
+      // Add the matched word
+      const matchedWord = prefixedText.substring(startIndex, endIndex);
+      textParts.push(matchedWord);
+
+      console.log(
+        `bf[${beforeMatch}] rmw[${match[0]}] mw[${matchedWord}] si[${startIndex}] ei[${endIndex}]`
+      );
+      lastIndex = endIndex;
+    }
+
+    if (lastIndex < lowercasedText.length) {
+      textParts.push(text.substring(lastIndex));
+    }
+
+    textParts[0] = textParts[0].replace(START, "");
+    if (textParts[0] === "") {
+      textParts.shift();
+    }
 
     console.log("matches", matches[0]);
 
-    const result: string[] = [];
-    let partIndex = 0,
-      matchIndex = 0;
-
-    while (partIndex < textParts.length || matchIndex < matches.length) {
-      if (partIndex < textParts.length) {
-        result.push(textParts[partIndex]);
-        partIndex++;
-      }
-      if (matchIndex < matches.length) {
-        result.push(matches[matchIndex]);
-        matchIndex++;
-      }
-    }
-
-    if (result[0]?.startsWith(START)) {
-      result[0] = result[0].replace(START, "");
-    }
-
-    if (result[0] === "") {
-      result.shift();
-    }
-
-    setSplittedText(result);
+    setSplittedText(textParts);
   }, [text, hintMap]);
 
   return (
@@ -118,19 +132,29 @@ export const TextWithHints = ({ text }: TextWithHintsProps) => {
         const hintIndex = hintMap.get(lowerWord);
         if (hintIndex !== undefined) {
           return (
-            <Text
-              key={index}
-              style={styles.hintText}
-              onPress={() => useHint(hintIndex)}
+            <Pressable
+              key={`hint-${index}`}
+              onPress={() => {
+                useHint(hintIndex);
+              }}
+              style={styles.hintPressable}
             >
-              {word}
-            </Text>
+              <Text key={`txt-${index}`} style={styles.hintText}>
+                {word}
+              </Text>
+            </Pressable>
           );
         } else {
-          return (
-            <Text key={index} style={{ color: "black" }}>
+          return word.includes("\n") ? (
+            <Text key={`txt-${index}`} style={styles.unhintedText}>
               {word}
             </Text>
+          ) : (
+            <Pressable key={`unhint-${index}`} style={styles.unhintPressable}>
+              <Text key={`txt-${index}`} style={styles.unhintedText}>
+                {word}
+              </Text>
+            </Pressable>
           );
         }
       })}
@@ -187,11 +211,24 @@ const styles = StyleSheet.create({
   },
   songLyrics: {
     fontSize: 16,
-    lineHeight: 30,
-    letterSpacing: 0.5,
   },
   hintText: {
-    color: "blue",
-    textDecorationLine: "underline",
+    color: "white",
+    fontSize: 16,
+  },
+  unhintedText: {
+    color: "black",
+    textAlignVertical: "top",
+    fontSize: 16,
+  },
+  hintPressable: {
+    backgroundColor: "blue",
+    borderRadius: 5,
+    paddingVertical: 1,
+    paddingHorizontal: 2,
+  },
+  unhintPressable: {
+    paddingVertical: 1,
+    paddingHorizontal: 2,
   },
 });

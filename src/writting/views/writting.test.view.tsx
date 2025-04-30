@@ -33,6 +33,7 @@ export function WrittingTestView() {
     retry,
     level,
     setLevel,
+    isPendingRefetch,
   } = useGetWrittingTestViewModel();
   const { answer, setAnswer } = useManageWrittingTestViewModel();
   const {
@@ -90,9 +91,16 @@ export function WrittingTestView() {
               retry();
             }}
             style={styles.nextButton}
+            disabled={isReviewing || isPendingRefetch}
           >
-            <Text style={styles.nextButtonText}>Next</Text>
-            <MaterialIcons name="navigate-next" size={24} color="white" />
+            {isPendingRefetch ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <>
+                <Text style={styles.nextButtonText}>Next</Text>
+                <MaterialIcons name="navigate-next" size={24} color="white" />
+              </>
+            )}
           </TouchableOpacity>
         </View>
 

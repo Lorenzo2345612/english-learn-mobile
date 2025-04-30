@@ -22,7 +22,7 @@ export const useGetWrittingTestViewModel = () => {
     }
   };
 
-  const { data, error, isLoading, isPending, refetch } = useQuery({
+  const { data, error, isLoading, isFetching, refetch } = useQuery({
     queryKey: ["writting-test"],
     queryFn: queryFn,
   });
@@ -38,7 +38,7 @@ export const useGetWrittingTestViewModel = () => {
     retry,
     level,
     setLevel,
-    isPendingRefetch: isPending,
+    isPendingRefetch: isFetching,
   };
 };
 
